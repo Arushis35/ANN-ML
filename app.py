@@ -7,7 +7,6 @@ from sklearn.preprocessing import StandardScaler
 
 import plotly.express as px
 
-
 st.set_page_config(page_title="ML Pipeline", layout="wide")
 
 st.title("ML Auto Pipeline")
@@ -122,15 +121,32 @@ if menu == "Upload":
         st.warning("Upload file")
 
 
+# ---------- EDA ----------
 elif menu == "EDA":
     if df is not None:
         col = st.selectbox("Column", df.columns)
+
+        # Histogram
         fig = px.histogram(df, x=col)
         st.plotly_chart(fig)
+
+        # ✅ Correlation Matrix
+        num_df = df.select_dtypes(include=np.number)
+
+        if num_df.shape[1] > 1:
+            st.subheader("Correlation Matrix")
+            corr = num_df.corr()
+
+            fig2 = px.imshow(corr, text_auto=True)
+            st.plotly_chart(fig2)
+        else:
+            st.info("Not enough numeric columns")
+
     else:
         st.warning("Upload file")
 
 
+# ---------- PREPROCESS ----------
 elif menu == "Preprocess":
     if df is not None:
         if st.button("Run"):
@@ -144,6 +160,7 @@ elif menu == "Preprocess":
         st.warning("Upload file")
 
 
+# ---------- MODEL ----------
 elif menu == "Model":
     if df is not None:
         df = preprocess(df)
@@ -155,7 +172,17 @@ elif menu == "Model":
 
         X = scale(X)
 
-        problem = detect_problem(y)
+        # ✅ NEW: manual + auto
+        problem_choice = st.selectbox(
+            "Select Problem Type",
+            ["Auto", "Classification", "Regression"]
+        )
+
+        if problem_choice == "Auto":
+            problem = detect_problem(y)
+        else:
+            problem = problem_choice
+
         st.write("Problem Type:", problem)
 
         X_train, X_test, y_train, y_test = train_test_split(X, y)
@@ -167,3 +194,6 @@ elif menu == "Model":
 
             fig = px.bar(x=list(res.keys()), y=list(res.values()))
             st.plotly_chart(fig)
+
+    else:
+        st.warning("Upload file")
